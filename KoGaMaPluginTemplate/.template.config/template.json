@@ -1,0 +1,44 @@
+{
+	"$schema": "http://json.schemastore.org/template",
+	"identity": "KoGaMaPluginTemplate",
+	"name": "KoGaMa Plugin",
+	"shortName": "kogama-plugin",
+	"author": "wowi",
+	"preferNameDirectory": true,
+	"classifications": [
+		"KoGaMa",
+		"BepInEx",
+		"Plugin"
+	],
+	"tags": {
+		"language": "C#",
+		"type": "project"
+	},
+	"sourceName": "ExamplePlugin",
+	"sources": [
+		{
+			"source": "./",
+			"target": "./",
+			"include": "**/*",
+			"exclude": [
+				"**/[Bb]in/**",
+				"**/[Oo]bj/**",
+				"**/[Dd]ebug/**",
+				"**/[Rr]elease/**",
+				".template.config/**/*",
+				".vs/**/*",
+				".vscode/**/*",
+				".idea/**/*"
+			]
+		}
+	],
+	"symbols": {
+		"Author": {
+			"type": "parameter",
+			"datatype": "text",
+			"description": "Your name",
+			"replaces": "AuthorName",
+			"defaultValue": "AuthorName"
+		}
+	}
+}

@@ -1,0 +1,138 @@
+<!--
+    KoGaMa Plugin Project
+
+    This template comes pre-configured with sensible defaults,
+    and can be customized by editing the ExamplePlugin.csproj.user file
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Assembly Information -->
+    <PropertyGroup>
+        <!-- Change these values with your own -->
+        <AssemblyName>ExamplePlugin</AssemblyName>
+        <RootNamespace>ExamplePlugin</RootNamespace>
+        <!-- Know what you're doing and need more customization? Here you go! -->
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10</LangVersion>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>x86</Platforms>
+        <RestoreAdditionalProjectSources>
+            https://api.nuget.org/v3/index.json;
+            https://nuget.bepinex.dev/v3/index.json;
+            https://nuget.samboy.dev/v3/index.json
+        </RestoreAdditionalProjectSources>
+    </PropertyGroup>
+
+    <!-- Assign a cleaner output path as we can only target x86 -->
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+        <OutputPath>bin\Debug\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+        <OutputPath>bin\Release\</OutputPath>
+    </PropertyGroup>
+
+
+    <!-- Import Template Configuration -->
+    <ItemGroup>
+        <Content Include="ExamplePlugin.csproj.user"/>
+    </ItemGroup>
+
+    <!-- Automatic Fallback Values -->
+    <PropertyGroup>
+        <!-- Default KoGaMa install location -->
+        <DefaultKoGaMaDir>$(LocalAppData)\KogamaLauncher-WWW\Launcher\Standalone</DefaultKoGaMaDir>
+        <!-- If no custom install location has been set, fallback to default install location -->
+        <KoGaMa_Location Condition="('$(KoGaMa_Location)' == '' Or !Exists('$(KoGaMa_Location)')) And Exists('$(DefaultKoGaMaDir)')">$(DefaultKoGaMaDir)</KoGaMa_Location>
+        <!-- If the config file failed to load, disable everything -->
+        <Enable_Task_FileValidation Condition="'$(Enable_Task_FileValidation)' == ''">false</Enable_Task_FileValidation>
+        <Enable_Task_PluginInstall Condition="'$(Enable_Task_PluginInstall)' == ''">false</Enable_Task_PluginInstall>
+    </PropertyGroup>
+
+
+    <!-- Base reference for the BepInEx IL2CPP framework -->
+    <ItemGroup>
+        <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.*" IncludeAssets="compile"/>
+    </ItemGroup>
+    
+    <!-- Base references for developing an IL2CPP mod -->
+    <ItemGroup>
+      <Reference Include="Assembly-CSharp">
+        <HintPath>$(KoGaMa_Location)\BepInEx\interop\Assembly-CSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="Il2CppInterop.Runtime">
+        <HintPath>$(KoGaMa_Location)\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Il2Cppmscorlib">
+        <HintPath>$(KoGaMa_Location)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine">
+        <HintPath>$(KoGaMa_Location)\BepInEx\interop\UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.CoreModule">
+        <HintPath>$(KoGaMa_Location)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+
+    <!-- Access assets in the assets folder -->
+    <ItemGroup Condition="Exists('$(ProjectDir)assets')">
+        <Folder Include="assets"/>
+        <ProjectAssets Include="$(ProjectDir)assets\**"/>
+    </ItemGroup>
+
+    <!-- Embed resources in the resources folder -->
+    <ItemGroup Condition="Exists('$(ProjectDir)resources')">
+        <Folder Include="resources"/>
+        <EmbeddedResource Include="$(ProjectDir)resources\**"/>
+    </ItemGroup>
+
+
+    <!-- Verify game directory exists with complete BepInEx installation -->
+    <Target
+        Condition="$(Enable_Task_FileValidation)"
+        Name="ValidateModLoaderInstallation"
+        BeforeTargets="Build"
+    >
+        <!-- If the KoGaMa_Location property has not been set, throw an error -->
+        <Error
+            Condition="'$(KoGaMa_Location)' == ''"
+            Text="Please specify your KoGaMa installation directory."
+        />
+        <!-- If the KoGaMa_Location directory does not exist, throw an error -->
+        <Error
+            Condition="!Exists('$(KoGaMa_Location)')"
+            Text="Could not locate KoGaMa installation directory. Please check your KoGaMa_Location property and try again."
+        />
+        <!-- If the BepInEx directory is missing, throw an error -->
+        <Error
+            Condition="!Exists('$(KoGaMa_Location)\BepInEx')"
+            Text="Could not locate BepInEx installation. Please download the latest BepInEx Bleeding Edge build: https://builds.bepinex.dev/projects/bepinex_be"
+        />
+        <!-- If the BepInEx core assembly is missing, throw an error -->
+        <Error
+            Condition="!Exists('$(KoGaMa_Location)\BepInEx\core\BepInEx.Core.dll')"
+            Text="BepInEx installation is corrupted. Please re-download the latest BepInEx Bleeding Edge build: https://builds.bepinex.dev/projects/bepinex_be"
+        />
+    </Target>
+
+    <!-- Automatically deploy to the plugins directory after building assembly -->
+    <Target
+        Condition="$(Enable_Task_PluginInstall)"
+        Name="DeployToPluginsDirectory"
+        AfterTargets="Build"
+    >
+        <!-- Copy newly-built assembly to BepInEx plugins directory -->
+        <Copy
+            SourceFiles="$(TargetDir)$(AssemblyName).dll"
+            DestinationFolder="$(KoGaMa_Location)\BepInEx\plugins\$(AssemblyName)"
+        />
+        <!-- Copy project assets to plugin's assets directory -->
+        <Copy
+            Condition="Exists('$(ProjectDir)assets')"
+            SourceFiles="@(ProjectAssets)"
+            DestinationFolder="$(KoGaMa_Location)\BepInEx\plugins\$(AssemblyName)\assets\%(RecursiveDir)"
+            SkipUnchangedFiles="true"
+        />
+    </Target>
+    
+</Project>
